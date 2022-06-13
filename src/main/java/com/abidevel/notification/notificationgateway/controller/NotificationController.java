@@ -9,6 +9,7 @@ import com.abidevel.notification.notificationgateway.service.NotificationService
 
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import io.swagger.v3.oas.annotations.Operation;
 
 import java.util.Objects;
@@ -35,6 +36,7 @@ public class NotificationController {
     @PostMapping(value="")
     @CircuitBreaker(name = "communication-fallback", fallbackMethod =  "communicationFallback")
     @Bulkhead(name = "bulkhead-communication", fallbackMethod = "communicationFallback")
+    @Retry(name = "retry-communication", fallbackMethod = "communicationFallback")
     public ResponseEntity<ApiResponse<Object>> handleNotificationRequest(@RequestBody NotificationRequest notfiicationRequest) {
         if (Objects.nonNull(notfiicationRequest)) {
             Optional<Long> notificationId = notificationService.generateNotification(notfiicationRequest);
