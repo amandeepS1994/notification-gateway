@@ -7,6 +7,7 @@ import com.abidevel.notification.notificationgateway.model.response.ApiResponse;
 import com.abidevel.notification.notificationgateway.model.response.NotificationResponse;
 import com.abidevel.notification.notificationgateway.service.NotificationService;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.swagger.v3.oas.annotations.Operation;
 
 import java.util.Objects;
@@ -31,6 +32,7 @@ public class NotificationController {
 
     @Operation(deprecated = false, method = "post")
     @PostMapping(value="")
+    @CircuitBreaker(name = "communication-fallback", fallbackMethod =  "communicationFallback")
     public ResponseEntity<ApiResponse<Object>> handleNotificationRequest(@RequestBody NotificationRequest notfiicationRequest) {
         if (Objects.nonNull(notfiicationRequest)) {
             Optional<Long> notificationId = notificationService.generateNotification(notfiicationRequest);
@@ -55,6 +57,8 @@ public class NotificationController {
             .message("Invalid Request")
             .build(), HttpStatus.BAD_REQUEST);
     }
-    
 
+    private ResponseEntity<ApiResponse<Object>> communicationFallback (@RequestBody NotificationRequest notfiicationRequest, Exception e) {
+        return new ResponseEntity<>(ApiResponse.builder().status(false).message("Service is unavilable. Request will retry once service has resumed.").build(), HttpStatus.ACCEPTED);
+    }
 }

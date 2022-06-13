@@ -1,6 +1,7 @@
 package com.abidevel.notification.notificationgateway.configuration;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -25,6 +26,7 @@ public class WebClientConfiguration {
 
 
     @Bean(name = "customerPreference")
+    @LoadBalanced
     public WebClient retrieveCustomerPreferenceClient() {
         return WebClient.builder()
             .baseUrl(this.getNotificationPreferenceURL())
@@ -32,6 +34,7 @@ public class WebClientConfiguration {
     }
 
     @Bean(name = "notificationFormatter")
+    @LoadBalanced
     public WebClient retrieveNotificationTemplateClient() {
         return WebClient.builder()
             .baseUrl(this.getNotificationTemplateFormatterURL())
@@ -39,6 +42,7 @@ public class WebClientConfiguration {
     }
     
     @Bean(name = "gateway")
+    @LoadBalanced
     public WebClient retrieveCustomerPreferenceGatewayClient() {
         return WebClient.builder()
             .baseUrl(this.getNotificationGatewayURL())

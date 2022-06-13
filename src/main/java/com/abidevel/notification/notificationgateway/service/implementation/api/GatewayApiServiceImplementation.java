@@ -26,7 +26,7 @@ public class GatewayApiServiceImplementation implements GatewayApiService {
     @Override
     public boolean generateNotification(GatewayRequest gatewayRequest) {     
         Optional<ApiResponse> apiResponse = this.webClient.post()
-        .uri("/notification/")
+        .uri("/generate-notification/")
                 .accept(MediaType.APPLICATION_JSON)
                 .body(Mono.just(gatewayRequest), GatewayRequest.class)
                 .retrieve()
