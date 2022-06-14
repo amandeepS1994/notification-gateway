@@ -9,6 +9,7 @@ import com.abidevel.notification.notificationgateway.service.NotificationService
 
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.swagger.v3.oas.annotations.Operation;
 
@@ -37,6 +38,7 @@ public class NotificationController {
     @CircuitBreaker(name = "communication-fallback", fallbackMethod =  "communicationFallback")
     @Bulkhead(name = "bulkhead-communication", fallbackMethod = "communicationFallback")
     @Retry(name = "retry-communication", fallbackMethod = "communicationFallback")
+    @RateLimiter(name = "ratelimiter-communication", fallbackMethod = "communicationRatelimiterFallback")
     public ResponseEntity<ApiResponse<Object>> handleNotificationRequest(@RequestBody NotificationRequest notfiicationRequest) {
         if (Objects.nonNull(notfiicationRequest)) {
             Optional<Long> notificationId = notificationService.generateNotification(notfiicationRequest);
@@ -64,5 +66,9 @@ public class NotificationController {
 
     private ResponseEntity<ApiResponse<Object>> communicationFallback (@RequestBody NotificationRequest notfiicationRequest, Exception e) {
         return new ResponseEntity<>(ApiResponse.builder().status(false).message("Service is unavilable. Request will retry once service has resumed.").build(), HttpStatus.ACCEPTED);
+    }
+
+    private ResponseEntity<ApiResponse<Object>> communicationRatelimiterFallback (@RequestBody NotificationRequest notfiicationRequest, Exception e) {
+        return new ResponseEntity<>(ApiResponse.builder().status(false).message("Rate of API Calls has been reached.").build(), HttpStatus.ACCEPTED);
     }
 }
