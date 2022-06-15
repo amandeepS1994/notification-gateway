@@ -27,6 +27,8 @@ import com.abidevel.notification.notificationgateway.service.api.NotificationFor
 import com.abidevel.notification.notificationgateway.utility.ObjectMapperUtility;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import brave.ScopedSpan;
+import brave.Tracer;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -41,20 +43,27 @@ public class NotificationServiceImplementation implements NotificationService {
     private final NotificationFormatterApiService notificationFormatterApiService;
     private final GatewayApiService gatewayApiService;
     private final ObjectMapper objectMapper;
+    private final Tracer tracer;
     
 
-    public NotificationServiceImplementation (CustomerPreferenceApiService customerPreferenceApiService, NotificationRepository notificationRepository, ObjectMapper objectMapper, NotificationFormatterApiService notificationFormatterApiService, GatewayApiService gatewayApiService) {
+    public NotificationServiceImplementation (CustomerPreferenceApiService customerPreferenceApiService, NotificationRepository notificationRepository, ObjectMapper objectMapper, NotificationFormatterApiService notificationFormatterApiService, GatewayApiService gatewayApiService, Tracer tracer) {
         this.customerPreferenceApiService = customerPreferenceApiService;
         this.notificationRepository = notificationRepository;
         this.objectMapper = objectMapper;
         this.notificationFormatterApiService = notificationFormatterApiService;
         this.gatewayApiService = gatewayApiService;
+        this.tracer = tracer;
     }
 
     @Override
     public Optional<Long> generateNotification(NotificationRequest notificationRequest) {
         if (Objects.nonNull(notificationRequest)) {
+            log.info("Sending Payment.");
            Notification notification = notificationRepository.save(objectMapper.convertValue(notificationRequest, Notification.class));
+           ScopedSpan newSpan = tracer.startScopedSpan("save Notifications Info");
+           newSpan.tag("Save in Notification DB", "h2");
+           newSpan.annotate("Client received");
+           newSpan.finish();
             Optional<CustomerPreferenceResponse> response = customerPreferenceApiService.retrieveCustomerPreference(CustomerPreferenceRequest.builder().customerId(notificationRequest.getCustomerId()).build());
             if (response.isPresent()) {
                 Optional<NotificationFormatterRequest> optionalNotificationFormatRequest = constructTemplateRequest(response.get(), notificationRequest);
